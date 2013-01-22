@@ -20,9 +20,15 @@
       countType:          'characters',
       wordSeparator:      ' ',
       maxCount:           140,
+      alertCount:         20,
+      warnCount:          10,
       strictMax:          false,
+      showDescription:    false,
+      descriptionText:    'remaining.',
       countDirection:     'down',
       safeClass:          'safe',
+      alertClass:         'alert',
+      warnClass:          'warn',
       overClass:          'over',
       thousandSeparator:  ',',
       onOverCount:        function(){},
@@ -85,20 +91,30 @@
         count = 0, revCount = options.maxCount;
       }
       
-      counter.text(numberFormat(countInt()));
-      
+      /* If showDescription is set to true, show description */
+      if (options.showDescription) {
+          counter.text(numberFormat(countInt()) + ' ' + options.countType + ' ' + options.descriptionText);     
+      }
+      else { counter.text(numberFormat(countInt())); }
+ 
       /* Set CSS class rules and API callbacks */
-      if (!counter.hasClass(options.safeClass) && !counter.hasClass(options.overClass)){
-        if (count < 0){ counter.addClass(options.overClass); }
-        else { counter.addClass(options.safeClass); }
+      if (!counter.hasClass(options.safeClass) && !counter.hasClass(options.warnClass) && !counter.hasClass(options.alertClass) && !counter.hasClass(options.overClass)) {
+          if (count < 0) { counter.addClass(options.overClass); }
+          else { counter.addClass(options.safeClass); }
       }
-      else if (count < 0 && counter.hasClass(options.safeClass)){
-        counter.removeClass(options.safeClass).addClass(options.overClass);
-        options.onOverCount(countInt(), countable, counter);
+      else if ((count <= options.warnCount) && !(count < 0) && !counter.hasClass(options.warnClass)) {
+          counter.removeClass(options.safeClass).removeClass(options.alertClass).removeClass(options.overClass).addClass(options.warnClass);
       }
-      else if (count >= 0 && counter.hasClass(options.overClass)){
-        counter.removeClass(options.overClass).addClass(options.safeClass);
-        options.onSafeCount(countInt(), countable, counter);
+      else if ((count <= options.alertCount) && !(count <= options.warnCount) && !counter.hasClass(options.alertClass)) {
+          counter.removeClass(options.safeClass).removeClass(options.warnClass).removeClass(options.overClass).addClass(options.alertClass);
+      }
+      else if ((count < 0) && !counter.hasClass(options.overClass)) {
+          counter.removeClass(options.safeClass).removeClass(options.alertClass).removeClass(options.warnClass).addClass(options.overClass)
+          options.onOverCount(countInt(), countable, counter);
+      }
+      else if (count > 0 && !(count <= options.alertCount) && !counter.hasClass(options.safeClass)) {
+          counter.removeClass(options.alertClass).removeClass(options.warnClass).removeClass(options.overClass).addClass(options.safeClass);
+          options.onSafeCount(countInt(), countable, counter);
       }
       
     };
