@@ -11,6 +11,9 @@
 * and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
 */
 
+// #TODO - Fix Calculations of words when using contentEditable
+// #TODO - Fix select all (ctrl + a) when using contentEditable
+
 (function($){
 
   $.fn.simplyCountable = function(options){
@@ -43,8 +46,7 @@
     
     var countCheck = function(){
            
-      var count;
-      var revCount;
+      var count, revCount, countval, contentEditable;
       
       var reverseCount = function(ct){
         return ct - (ct*2) + options.maxCount;
@@ -70,24 +72,46 @@
         return prefix + ct;
       }
       
+      /* Check to see if target is using contentEditable */
+      if ($(countable).attr('contentEditable')){
+          contentEditable = true;
+          countval = countable.text();
+      }
+      else{ countval = countable.val(); }
+
       /* Calculates count for either words or characters */
       if (options.countType === 'words'){
-        count = options.maxCount - $.trim(countable.val()).split(regex).length;
-        if (countable.val() === ''){ count += 1; }
+        count = options.maxCount - $.trim(countval).split(regex).length;
+        if (countval === ''){ count += 1; }
       }
-      else { count = options.maxCount - countable.val().length; }
+      else { count = options.maxCount - countval.length; }
       revCount = reverseCount(count);
-      
+
       /* If strictMax set restrict further characters */
+      
       if (options.strictMax && count <= 0){
-        var content = countable.val();
+        var content = countval;
         if (count < 0 || content.match(new RegExp('['+options.wordSeparator+']$'))) {
           options.onMaxCount(countInt(), countable, counter);
         }
-        if (options.countType === 'words'){
-          countable.val(content.split(regex).slice(0, options.maxCount).join(options.wordSeparator));
+
+        if (contentEditable === true) {
+          if (options.countType === 'words') {
+            countable.text(content.split(regex).slice(0, options.maxCount).join(options.wordSeparator));             
+          }
+          else { 
+            countable.text(content.substring(0, options.maxCount));
+          }
         }
-        else { countable.val(content.substring(0, options.maxCount)); }
+        else {
+          if (options.countType === 'words') {
+            countable.val(content.split(regex).slice(0, options.maxCount).join(options.wordSeparator));    
+          }
+          else { 
+            countable.val(content.substring(0, options.maxCount));  
+          }
+        }
+
         count = 0, revCount = options.maxCount;
       }
       
